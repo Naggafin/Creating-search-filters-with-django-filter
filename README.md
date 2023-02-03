@@ -78,9 +78,9 @@ url_patterns = [
 Our project is now setup and we're ready to continue.
 
 # Creating a model and a serializer
-To get started, we will define two models that we can use to filter data: Author and Book. We'll create some basic fields on them that we'll be able to filter for later, and we will create a ForeignKey relationship between the Book and Author models so that we can easily retrieve a set of books for any given author. To do this, add the following code to the models.py file within the books app:
+To get started, we will define two models that we can use to filter data: `Author` and `Book`. We'll create some basic fields on them that we'll be able to filter for later, and we will create a `ForeignKey` relationship between the `Book` and `Author` models so that we can easily retrieve a set of books for any given author. To do this, add the following code to the models.py file within the books app:
 
-```
+```python
 # books/models.py
 
 from django.db import models
@@ -107,7 +107,7 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
 ```
 
-Now we need to define the serializers for our models so that we can utilize Django REST Framework and later create a filterable web API. We'll define a serializer for both the Author and Book models. The BookSerializer is used as a nested serializer in AuthorSerializer (as indicated by the `published_books` field) for the convenience of the end user. Without a nested serializer, Django REST Framework would only serialize the primary key field, which is `id` by default. With the nested serializer defined, it will serialize all of the fields defined in the BookSerializer for each Book in the Author's `published_books` set into a JSON array. Create a serializers.py file in the books app folder and add the following code:
+Now we need to define the serializers for our models so that we can utilize Django REST Framework and later create a filterable web API. We'll define a serializer for both the `Author` and `Book` models. The `BookSerializer` is used as a nested serializer in `AuthorSerializer` (as indicated by the `published_books` field) for the convenience of the end user. Without a nested serializer, Django REST Framework would only serialize the primary key field, which is `id` by default. With the nested serializer defined, it will serialize all of the fields defined in the `BookSerializer` for each `Book` in the `Author`'s `published_books` set into a JSON array. Create a serializers.py file in the books app folder and add the following code:
 
 ```python
 # books/serializers.py
@@ -133,13 +133,13 @@ class AuthorSerializer(serializers.ModelSerializer):
 With the models and serializers properly set up, we're now ready to create our FilterSet and views.
 
 # Creating the FilterSet
-At the heart of Django Filters lies the FilterSet class, which functions similarly to a Django ModelForm class but is used to filter a model's queryset rather than create or update a model instance. The FilterSet can be configured to filter the queryset based on user input either by defining the filters explicitly or by using a Meta class. There are two ways to define which fields to filter in a FilterSet Meta class: by providing a list of field names, which will always filter using `__exact`, or by providing a dictionary where the key is the field name and the value is a list of lookup expressions. The latter approach allows for more nuanced filtering, such as filtering CharFields by `__icontains` instead of `__exact`.
+At the heart of Django Filters lies the `FilterSet` class, which functions similarly to a Django `ModelForm` class but is used to filter a model's queryset rather than create or update a model instance. The `FilterSet` can be configured to filter the queryset based on user input either by defining the filters explicitly or by using a `Meta` class. There are two ways to define which fields to filter in a `FilterSet` `Meta` class: by providing a list of field names, which will always filter using `__exact`, or by providing a dictionary where the key is the field name and the value is a list of lookup expressions. The latter approach allows for more nuanced filtering, such as filtering CharField by `__icontains` instead of `__exact`.
 
-It's also worth noting that filters inside of a FilterSet can span relationships using the double underscore syntax. For instance, to filter the books by author's name, you can use `author__name` as a filter field in the FilterSet class.
+It's also worth noting that filters inside of a `FilterSet` can span relationships using the double underscore syntax. For instance, to filter the books by author's name, you can use `author__name` as a filter field in the `FilterSet` class.
 
-By default, fields within the FilterSet are optional, unlike Django Forms where all fields are required by default. This is because the user may not want to search by all available parameters, but only a few. The FilterSet class can handle this by intelligently not including filters that have not been supplied a value.
+By default, fields within the `FilterSet` are optional, unlike Django Forms where all fields are required by default. This is because the user may not want to search by all available parameters, but only a few. The `FilterSet` class can handle this by intelligently not including filters that have not been supplied a value.
 
-In this tutorial, we will create FilterSets for Author and Book: AuthorFilter and BookFilter. BookFilter filters the title and author using `__icontains`, with author being an explicitly defined field so we can have it span relationships, and keeps genre with `__exact` as it has accompanying choices. It will also have two explicitly defined fields for specifying price: `min_price` and `max_price`. AuthorFilter will only filter an author's name by using `__icontains`. We will use the FilterSet class from `django_filters.restframework` to allow for REST API usage, rather than the standard FilterSet class from `django_filters`. To do so, create a file filters.py within the books app and add the code provided:
+In this tutorial, we will create FilterSets for `Author` and `Book`: `AuthorFilter` and `BookFilter`. `BookFilter` filters the title and author using `__icontains`, with author being an explicitly defined field so we can have it span relationships, and keeps genre with `__exact` as it has accompanying choices. It will also have two explicitly defined fields for specifying price: `min_price` and `max_price`. `AuthorFilter` will only filter an author's name by using `__icontains`. We will use the FilterSet class from `django_filters.restframework` to allow for REST API usage, rather than the standard `FilterSet` class from `django_filters`. To do so, create a file filters.py within the books app and add the code provided:
 
 ```python
 # books/filters.py
@@ -171,7 +171,7 @@ class BookFilter(filters.FilterSet):
 ```
 
 # Creating a FilterView and ListAPIView
-Now that we've created our FilterSet classes, we'll need to create views so we can actually use them. Django Filter provides a FilterView class, which we can use to easily implement a fully-featured view with filter capabilities. It functions similarly to Django's generic ListView class. While you can also use function-based views, we'll be using class-based views in this tutorial for their ease of implementation and comprehensive "batteries included" approach. In addition to FilterView, we'll also use Django REST Framework's ReadOnlyModelViewSet class to implement filtering via web API. Add the following code to the views.py file in your books app to render the filtered books, and another view to return a filtered list of books through the web API.
+Now that we've created our `FilterSet` classes, we'll need to create views so we can actually use them. Django Filter provides a `FilterView` class, which we can use to easily implement a fully-featured view with filter capabilities. It functions similarly to Django's generic `ListView` class. While you can also use function-based views, we'll be using class-based views in this tutorial for their ease of implementation and comprehensive "batteries included" approach. In addition to `FilterView`, we'll also use Django REST Framework's `ReadOnlyModelViewSet` class to implement filtering via web API. Add the following code to the views.py file in your books app to render the filtered books, and another view to return a filtered list of books through the web API.
 
 ```python
 # books/views.py
@@ -201,7 +201,7 @@ class BookViewset(ReadOnlyModelViewSet):
     filterset_class = BookFilter
 ```
 
-And that's it. Just four classes and a mere ten lines of code between them and we've got our filterable views for not one, but two models. It's incredible how simple it is to implement filtering with Django Filter. Now we need to create our URL patterns. We'll be creating two URL paths to our FilterViews and two API routes to our API endpoints with Django REST Framework's DefaultRouter class, with the router being pathed to /api. To keep our URL namespaced, the empty pattern will match a RedirectView that will redirect the browser to /books by default. Create a urls.py for the books app and add the following code in the file:
+And that's it. Just four classes and a mere ten lines of code between them and we've got our filterable views for not one, but two models. It's incredible how simple it is to implement filtering with Django Filter. Now we need to create our URL patterns. We'll be creating two URL paths to our FilterViews and two API routes to our API endpoints with Django REST Framework's `DefaultRouter` class, with the router being pathed to /api. To keep our URL namespaced, the empty pattern will match a `RedirectView` that will redirect the browser to /books by default. Create a urls.py for the books app and add the following code in the file:
 
 ```python
 # books/urls.py
