@@ -3,9 +3,9 @@ Using Django Filter to create a Filterable Book Catalog
 In many Django web applications, filtering querysets based on user input is a critical functionality. Applications such as e-commerce websites, library catalogs, and plenty others often require the ability for users to specify search criteria to narrow down the data they are presented with. This tutorial will guide you through the process of creating both a user interface for searching and a search web API using Django Filter.
 
 In this article, you'll learn the following:
-..* What Django Filter is and why it's useful
-..* How to create FilterSets for your models
-..* Creating views that can use FilterSets to filter data they return
+* What Django Filter is and why it's useful
+* How to create FilterSets for your models
+* Creating views that can use FilterSets to filter data they return
 
 This article assumes that you have a basic understanding of Python, Django, Django REST Framework, and HTML.
 
@@ -39,28 +39,28 @@ Finally, let's add `django-filters` and `rest_framework` to our list of installe
 DEBUG = True
 
 INSTALLED_APPS = [
-	...
-	'rest_framework',
-	'django_filters',
-	...
+    ...
+    'rest_framework',
+    'django_filters',
+    ...
 ]
 
 TEMPLATES = [
-	{
-		...
-		'DIRS': [BASE_DIR / 'templates'],  # this works if BASE_DIR is a Path object; if not, you will use os.path.join()
-		...
-	},
+    {
+        ...
+        'DIRS': [BASE_DIR / 'templates'],  # this works if BASE_DIR is a Path object; if not, you will use os.path.join()
+        ...
+    },
 ]
 
 REST_FRAMEWORK = {
-	...
-	'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-	'DEFAULT_RENDERER_CLASSES': [
-		'rest_framework.renderers.JSONRenderer',
-		'rest_framework.renderers.BrowsableAPIRenderer',
-	],
-	...
+    ...
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    ...
 }
 
 
@@ -69,9 +69,9 @@ REST_FRAMEWORK = {
 from django.urls import include, path
 
 url_patterns = [
-	...
-	path("books/", include("books.urls")),
-	...
+    ...
+    path("books/", include("books.urls")),
+    ...
 ]
 ```
 
@@ -86,25 +86,25 @@ To get started, we will define two models that we can use to filter data: Author
 from django.db import models
 
 class Author(models.Model):
-	name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
 
 class Book(models.Model):
-	class Genres(models.TextChoices):
-		HORROR = ("hor", "Horror")
-		ROMANCE = ("rom", "Romance")
-		ADVENTURE = ("adv", "Adventure")
-		FANTASY = ("fan", "Fantasy")
-		SCIFI = ("sci", "Science Fiction")
-		NONFICTION = ("non", "Non-fiction")
+    class Genres(models.TextChoices):
+        HORROR = ("hor", "Horror")
+        ROMANCE = ("rom", "Romance")
+        ADVENTURE = ("adv", "Adventure")
+        FANTASY = ("fan", "Fantasy")
+        SCIFI = ("sci", "Science Fiction")
+        NONFICTION = ("non", "Non-fiction")
 
-	title = models.CharField(max_length=100)
-	author = models.ForeignKey(
-		Author, on_delete=models.CASCADE, related_name="published_books"
-	)
-	genre = models.CharField(max_length=3, choices=Genres.choices)
-	publication_date = models.DateField()
-	isbn = models.CharField("ISBN", max_length=13)
-	price = models.DecimalField(max_digits=5, decimal_places=2)
+    title = models.CharField(max_length=100)
+    author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="published_books"
+    )
+    genre = models.CharField(max_length=3, choices=Genres.choices)
+    publication_date = models.DateField()
+    isbn = models.CharField("ISBN", max_length=13)
+    price = models.DecimalField(max_digits=5, decimal_places=2)
 ```
 
 Now we need to define the serializers for our models so that we can utilize Django REST Framework and later create a filterable web API. We'll define a serializer for both the Author and Book models. The BookSerializer is used as a nested serializer in AuthorSerializer (as indicated by the `published_books` field) for the convenience of the end user. Without a nested serializer, Django REST Framework would only serialize the primary key field, which is `id` by default. With the nested serializer defined, it will serialize all of the fields defined in the BookSerializer for each Book in the Author's `published_books` set into a JSON array. Create a serializers.py file in the books app folder and add the following code:
@@ -116,18 +116,18 @@ from rest_framework import serializers
 from .models import Author, Book
 
 class BookSerializer(serializers.ModelSerializer):
-	author = serializers.CharField(source="author.name")
+    author = serializers.CharField(source="author.name")
 
-	class Meta:
-		model = Book
-		fields = ["id", "title", "author", "genre", "publication_date", "isbn", "price"]
+    class Meta:
+        model = Book
+        fields = ["id", "title", "author", "genre", "publication_date", "isbn", "price"]
 
 class AuthorSerializer(serializers.ModelSerializer):
-	published_books = BookSerializer(many=True)
+    published_books = BookSerializer(many=True)
 
-	class Meta:
-		model = Author
-		fields = ["id", "name", "published_books"]
+    class Meta:
+        model = Author
+        fields = ["id", "name", "published_books"]
 ```
 
 With the models and serializers properly set up, we're now ready to create our FilterSet and views.
@@ -148,26 +148,26 @@ from django_filters import rest_framework as filters
 from .models import Author, Book
 
 class AuthorFilter(filters.FilterSet):
-	class Meta:
-		model = Author
-		fields = {
-			"name": ["icontains"],
-		}
+    class Meta:
+        model = Author
+        fields = {
+            "name": ["icontains"],
+        }
 
 class BookFilter(filters.FilterSet):
-	author = filters.CharFilter(field_name="author__name", lookup_expr="icontains")
-	min_price = filters.NumberFilter(field_name="price", lookup_expr="gte")
-	max_price = filters.NumberFilter(field_name="price", lookup_expr="lte")
+    author = filters.CharFilter(field_name="author__name", lookup_expr="icontains")
+    min_price = filters.NumberFilter(field_name="price", lookup_expr="gte")
+    max_price = filters.NumberFilter(field_name="price", lookup_expr="lte")
 
-	class Meta:
-		model = Book
-		fields = {
-			"title": ["icontains"],
-			"genre": ["exact"],
-			"publication_date": ["year", "range"],
-			"isbn": ["iexact"],
-			"price": ["exact"],
-		}
+    class Meta:
+        model = Book
+        fields = {
+            "title": ["icontains"],
+            "genre": ["exact"],
+            "publication_date": ["year", "range"],
+            "isbn": ["iexact"],
+            "price": ["exact"],
+        }
 ```
 
 # Creating a FilterView and ListAPIView
@@ -183,22 +183,22 @@ from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer
 
 class AuthorList(FilterView):
-	template_name = "books/author_filter.html"
-	filterset_class = AuthorFilter
+    template_name = "books/author_filter.html"
+    filterset_class = AuthorFilter
 
 class BookList(FilterView):
-	template_name = "books/book_filter.html"
-	filterset_class = BookFilter
+    template_name = "books/book_filter.html"
+    filterset_class = BookFilter
 
 class AuthorViewset(ReadOnlyModelViewSet):
-	queryset = Author.objects.all()
-	serializer_class = AuthorSerializer
-	filterset_class = AuthorFilter
+    queryset = Author.objects.all()
+    serializer_class = AuthorSerializer
+    filterset_class = AuthorFilter
 
 class BookViewset(ReadOnlyModelViewSet):
-	queryset = Book.objects.all()
-	serializer_class = BookSerializer
-	filterset_class = BookFilter
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    filterset_class = BookFilter
 ```
 
 And that's it. Just four classes and a mere ten lines of code between them and we've got our filterable views for not one, but two models. It's incredible how simple it is to implement filtering with Django Filter. Now we need to create our URL patterns. We'll be creating two URL paths to our FilterViews and two API routes to our API endpoints with Django REST Framework's DefaultRouter class, with the router being pathed to /api. To keep our URL namespaced, the empty pattern will match a RedirectView that will redirect the browser to /books by default. Create a urls.py for the books app and add the following code in the file:
@@ -218,10 +218,10 @@ router.register(r"authors", views.AuthorViewset)
 router.register(r"books", views.BookViewset)
 
 urlpatterns = [
-	path("", RedirectView.as_view(pattern_name="books:book_list"), name="index"),
-	path("authors/", views.AuthorList.as_view(), name="author_list"),
-	path("books/", views.BookList.as_view(), name="book_list"),
-	path("api/", include(router.urls)),
+    path("", RedirectView.as_view(pattern_name="books:book_list"), name="index"),
+    path("authors/", views.AuthorList.as_view(), name="author_list"),
+    path("books/", views.BookList.as_view(), name="book_list"),
+    path("api/", include(router.urls)),
 ]
 ```
 
@@ -234,17 +234,17 @@ Now that we have our FilterSets, our views, and our URL patterns, we need to cre
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Book Catalog</title>
+  <title>Book Catalog</title>
 </head>
 <body>
-	{% block header %}
-	<header>
-		<a href="{% url 'books:book_list' %}">Search catalog by books</a>
-		<a href="{% url 'books:author_list' %}">Search catalog by authors</a>
-	</header>
-	{% endblock %}
-	{% block content %}
-	{% endblock %}
+  {% block header %}
+  <header>
+    <a href="{% url 'books:book_list' %}">Search catalog by books</a>
+    <a href="{% url 'books:author_list' %}">Search catalog by authors</a>
+  </header>
+  {% endblock %}
+  {% block content %}
+  {% endblock %}
 </body>
 </html>
 
@@ -255,39 +255,39 @@ Now that we have our FilterSets, our views, and our URL patterns, we need to cre
 
 {% block content %}
 <main>
-	<h1>Books</h1>
-	<form action="{% url 'books:book_list' %}" method="get">
-		{{ filter.form.as_div }}
-		<button type="submit">Search</button>
-	</form>
-	<table>
-		<thead>
-			<tr>
-				<th>Title</th>
-				<th>Author</th>
-				<th>Genre</th>
-				<th>Publication Date</th>
-				<th>ISBN</th>
-				<th>Price</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for book in filter.qs %}
-				<tr>
-					<td>{{ book.title }}</td>
-					<td>{{ book.author.name }}</td>
-					<td>{{ book.get_genre_display }}</td>
-					<td>{{ book.publication_date }}</td>
-					<td>{{ book.isbn }}</td>
-					<td>${{ book.price }}</td>
-				</tr>
-			{% empty %}
-				<tr>
-					<td colspan="6">No books to show!</td>
-				</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+  <h1>Books</h1>
+  <form action="{% url 'books:book_list' %}" method="get">
+    {{ filter.form.as_div }}
+    <button type="submit">Search</button>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Genre</th>
+        <th>Publication Date</th>
+        <th>ISBN</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for book in filter.qs %}
+        <tr>
+          <td>{{ book.title }}</td>
+          <td>{{ book.author.name }}</td>
+          <td>{{ book.get_genre_display }}</td>
+          <td>{{ book.publication_date }}</td>
+          <td>{{ book.isbn }}</td>
+          <td>${{ book.price }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="6">No books to show!</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </main>
 {% endblock %}
 
@@ -298,35 +298,35 @@ Now that we have our FilterSets, our views, and our URL patterns, we need to cre
 
 {% block content %}
 <main>
-	<h1>Authors</h1>
-	<form action="{% url 'books:author_list' %}" method="get">
-		{{ filter.form.as_div }}
-		<button type="submit">Search</button>
-	</form>
-	<table>
-		<thead>
-			<tr>
-				<th>Author</th>
-				<th>Published books</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for author in filter.qs %}
-				<tr>
-					<td>{{ author.name }}</td>
-					<td>
-						{% for book in author.published_books.all %}
-							{{ book.title }}<br>
-						{% endfor %}
-					</td>
-				</tr>
-			{% empty %}
-				<tr>
-					<td colspan="2">No authors to show!</td>
-				</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+  <h1>Authors</h1>
+  <form action="{% url 'books:author_list' %}" method="get">
+    {{ filter.form.as_div }}
+    <button type="submit">Search</button>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <th>Author</th>
+        <th>Published books</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for author in filter.qs %}
+        <tr>
+          <td>{{ author.name }}</td>
+          <td>
+            {% for book in author.published_books.all %}
+              {{ book.title }}<br>
+            {% endfor %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">No authors to show!</td>
+        </tr>
+      {% endfor %}
+  </tbody>
+  </table>
 </main>
 {% endblock %}
 ```
