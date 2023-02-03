@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Book Catalog</title>
+</head>
+<body>
+	{% block header %}
+	<header>
+		<a href="{% url 'books:book_list' %}">Search catalog by books</a>
+		<a href="{% url 'books:author_list' %}">Search catalog by authors</a>
+	</header>
+	{% endblock %}
+	{% block content %}
+	{% endblock %}
+</body>
+</html>

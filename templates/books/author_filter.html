@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main>
+	<h1>Authors</h1>
+	<form action="{% url 'books:author_list' %}" method="get">
+		{{ filter.form.as_div }}
+		<button type="submit">Search</button>
+	</form>
+	<table>
+		<thead>
+			<tr>
+				<th>Author</th>
+				<th>Published books</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for author in filter.qs %}
+				<tr>
+					<td>{{ author.name }}</td>
+					<td>
+						{% for book in author.published_books.all %}
+							{{ book.title }}<br>
+						{% endfor %}
+					</td>
+				</tr>
+			{% empty %}
+				<tr>
+					<td colspan="2">No authors to show!</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</main>
+{% endblock %}

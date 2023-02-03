@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main>
+	<h1>Books</h1>
+	<form action="{% url 'books:book_list' %}" method="get">
+		{{ filter.form.as_div }}
+		<button type="submit">Search</button>
+	</form>
+	<table>
+		<thead>
+			<tr>
+				<th>Title</th>
+				<th>Author</th>
+				<th>Genre</th>
+				<th>Publication Date</th>
+				<th>ISBN</th>
+				<th>Price</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for book in filter.qs %}
+				<tr>
+					<td>{{ book.title }}</td>
+					<td>{{ book.author.name }}</td>
+					<td>{{ book.get_genre_display }}</td>
+					<td>{{ book.publication_date.year }}</td>
+					<td>{{ book.isbn }}</td>
+					<td>${{ book.price }}</td>
+				</tr>
+			{% empty %}
+				<tr>
+					<td colspan="6">No books to show!</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</main>
+{% endblock %}
